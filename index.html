@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bible Reading</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bible Reading">
+<meta name="theme-color" content="#F5F5EE">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --paper:#F5F5EE; --card:#FDFDF9; --ink:#262B24; --ink-soft:#6B7166; --line:#DDDFD3;
+  --laurel:#3D6B4E; --laurel-soft:#E7EEE6; --laurel-ink:#FDFDF9; --brass:#9C7A2F;
+  --danger:#9A4A3B;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#141713; --card:#1C201B; --ink:#E7E8DF; --ink-soft:#9AA093; --line:#2E332C;
+  --laurel:#7FB08E; --laurel-soft:#243528; --laurel-ink:#141713; --brass:#C9A45C;
+  --danger:#C97B6B;
+}}
+:root[data-theme="light"]{
+  --paper:#F5F5EE; --card:#FDFDF9; --ink:#262B24; --ink-soft:#6B7166; --line:#DDDFD3;
+  --laurel:#3D6B4E; --laurel-soft:#E7EEE6; --laurel-ink:#FDFDF9; --brass:#9C7A2F;
+  --danger:#9A4A3B;
+}
+:root[data-theme="dark"]{
+  --paper:#141713; --card:#1C201B; --ink:#E7E8DF; --ink-soft:#9AA093; --line:#2E332C;
+  --laurel:#7FB08E; --laurel-soft:#243528; --laurel-ink:#141713; --brass:#C9A45C;
+  --danger:#C97B6B;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  padding-bottom:env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:2px solid var(--laurel);outline-offset:2px;border-radius:6px}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:10;background:var(--paper);
+  padding:calc(10px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+.h-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:var(--serif);font-size:1.25rem;font-weight:600;margin:0;letter-spacing:.01em}
+.h-count{font-family:var(--serif);font-size:.9rem;color:var(--ink-soft);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.h-count b{color:var(--ink);font-weight:600}
+.bar{height:5px;border-radius:3px;background:var(--line);margin-top:9px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--laurel);width:0%;
+  transition:width .35s ease}
+@media (prefers-reduced-motion: reduce){.bar i{transition:none}}
+.search{display:block;width:100%;margin-top:10px;padding:9px 12px;
+  font:inherit;font-size:16px;color:var(--ink);
+  background:var(--card);border:1px solid var(--line);border-radius:9px;
+  -webkit-appearance:none;appearance:none}
+.search::placeholder{color:var(--ink-soft)}
+.search:focus{outline:none;border-color:var(--laurel)}
+.no-match{text-align:center;color:var(--ink-soft);font-size:.85rem;padding:26px 0 10px;display:none}
+
+main{max-width:560px;margin:0 auto;padding:6px 12px 40px}
+
+/* ---------- testament sections ---------- */
+.sect{display:flex;align-items:baseline;justify-content:space-between;
+  margin:22px 6px 10px;gap:12px}
+.sect h2{font-size:.72rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.11em;color:var(--ink-soft);margin:0}
+.sect span{font-size:.75rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+
+/* ---------- book rows ---------- */
+.book{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  margin-bottom:8px;overflow:hidden}
+.bk-head{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:12px 14px;min-height:54px}
+.bk-name{font-family:var(--serif);font-size:1.05rem;flex:1;min-width:0}
+.bk-count{font-size:.78rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bk-count .started{color:var(--laurel);font-weight:600}
+.bk-ring{flex:none;width:22px;height:22px}
+.bk-ring circle{fill:none;stroke-width:2.6}
+.bk-ring .track{stroke:var(--line)}
+.bk-ring .fill{stroke:var(--laurel);stroke-linecap:round;
+  transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset .3s ease}
+@media (prefers-reduced-motion: reduce){.bk-ring .fill{transition:none}}
+.bk-done-check{display:none;color:var(--laurel)}
+.book.complete .bk-ring{display:none}
+.book.complete .bk-done-check{display:block}
+.book.complete .bk-name{color:var(--ink-soft)}
+.chev{flex:none;color:var(--ink-soft);transition:transform .2s ease}
+.book.open .chev{transform:rotate(180deg)}
+@media (prefers-reduced-motion: reduce){.chev{transition:none}}
+
+/* ---------- chapter grid ---------- */
+.grid{border-top:1px solid var(--line);padding:12px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:7px}
+.chip{height:44px;border-radius:9px;border:1.5px solid var(--line);background:var(--paper);
+  font-family:var(--serif);font-size:.98rem;font-variant-numeric:tabular-nums;
+  display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.chip.on{background:var(--laurel);border-color:var(--laurel);color:var(--laurel-ink)}
+.grid-foot{grid-column:1/-1;display:flex;justify-content:center;margin-top:4px}
+.mark-all{padding:9px 18px;font-size:.85rem;font-weight:600;color:var(--laurel);
+  background:var(--laurel-soft);border-radius:8px}
+
+/* ---------- backup ---------- */
+.backup{margin-top:28px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:14px 16px 16px}
+.backup h2{font-size:.72rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.11em;color:var(--ink-soft);margin:0}
+.backup p{font-size:.85rem;line-height:1.45;color:var(--ink-soft);margin:6px 0 12px}
+.btn-row{display:flex;gap:8px}
+.btn{flex:1;padding:11px 10px;border-radius:9px;font-size:.88rem;font-weight:600;text-align:center}
+.btn.primary{background:var(--laurel);color:var(--laurel-ink)}
+.btn.soft{background:var(--laurel-soft);color:var(--laurel)}
+
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);
+  padding:18px;width:min(calc(100vw - 32px),420px);max-width:none}
+dialog::backdrop{background:rgba(20,23,19,.5)}
+dialog h2{font-family:var(--serif);font-size:1.15rem;font-weight:600;margin:0 0 6px}
+dialog p{font-size:.86rem;line-height:1.45;color:var(--ink-soft);margin:0 0 12px}
+dialog textarea{display:block;width:100%;min-height:118px;padding:10px;margin:0 0 6px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px;line-height:1.35;
+  color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;
+  resize:vertical;word-break:break-all}
+dialog textarea:focus{outline:none;border-color:var(--laurel)}
+.dlg-msg{font-size:.82rem;min-height:1.3em;margin:0 0 10px;color:var(--laurel)}
+.dlg-msg.err{color:var(--danger)}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
+  transform:translate(-50%,12px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--paper);font-size:.88rem;font-weight:500;
+  padding:10px 16px;border-radius:999px;transition:opacity .2s,transform .2s;z-index:50}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+
+/* ---------- footer ---------- */
+footer{margin-top:24px;text-align:center;font-size:.78rem;color:var(--ink-soft)}
+footer p{margin:4px 0}
+.reset{color:var(--danger);font-size:.8rem;text-decoration:underline;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-row">
+    <h1>Bible Reading</h1>
+    <div class="h-count" id="hcount"></div>
+  </div>
+  <div class="bar"><i id="hbar"></i></div>
+  <input class="search" id="search" type="search" placeholder="Jump to a book…"
+    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+    aria-label="Search for a book">
+</header>
+
+<main>
+  <div id="list"></div>
+  <p class="no-match" id="nomatch">No book matches that.</p>
+  <section class="backup">
+    <h2>Move to a new phone</h2>
+    <p>Your progress lives on this phone only. Copy your progress code and keep it in Notes or a message to yourself, then import it on the new phone.</p>
+    <div class="btn-row">
+      <button class="btn primary" id="exportBtn">Copy code</button>
+      <button class="btn soft" id="importBtn">Import code</button>
+    </div>
+  </section>
+  <footer>
+    <p>66 books &middot; 1,189 chapters &middot; any order, at your pace</p>
+    <button class="reset" id="reset">Reset all progress</button>
+  </footer>
+</main>
+
+<dialog id="exportDlg">
+  <h2>Your progress code</h2>
+  <p id="exportText"></p>
+  <textarea id="exportCode" readonly aria-label="Progress code"></textarea>
+  <p class="dlg-msg" id="exportMsg"></p>
+  <div class="btn-row">
+    <button class="btn primary" id="copyBtn">Copy</button>
+    <button class="btn soft" id="shareBtn" hidden>Share…</button>
+    <button class="btn soft" id="exportClose">Done</button>
+  </div>
+</dialog>
+
+<dialog id="importDlg">
+  <h2>Import progress</h2>
+  <p>Paste the code from your old phone. It starts with <b>BR1-</b>. This replaces any progress on this phone.</p>
+  <textarea id="importCode" placeholder="BR1-…" aria-label="Paste progress code"
+    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+  <p class="dlg-msg" id="importMsg"></p>
+  <div class="btn-row">
+    <button class="btn primary" id="importGo">Import</button>
+    <button class="btn soft" id="importClose">Cancel</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const DATA = {"names":["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth","1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther","Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians","Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation"],"counts":[50,40,27,36,34,24,21,4,31,24,22,25,29,36,10,13,10,42,150,31,12,8,66,52,5,48,12,14,3,9,1,4,7,3,3,3,2,14,4,28,16,24,21,28,16,16,13,6,6,4,4,5,3,6,4,3,1,13,5,5,3,5,1,1,1,22]};
+const NAMES = DATA.names, COUNTS = DATA.counts;
+const TOTAL = COUNTS.reduce((a,b)=>a+b,0);
+const NT_START = 39;
+const KEY = 'bible-reading-progress-v1';
+
+let done = new Set();
+try { done = new Set(JSON.parse(localStorage.getItem(KEY)) || []); } catch(e) {}
+const save = () => localStorage.setItem(KEY, JSON.stringify([...done]));
+const cid = (b,c) => b + ':' + c;
+const bookDone = b => { let n=0; for(let c=1;c<=COUNTS[b];c++) if(done.has(cid(b,c))) n++; return n; };
+
+/* ---------- build ---------- */
+const list = document.getElementById('list');
+const RING_C = 2 * Math.PI * 9;
+
+function sectionHeader(title, id){
+  const el = document.createElement('div');
+  el.className = 'sect';
+  el.innerHTML = `<h2>${title}</h2><span id="${id}"></span>`;
+  return el;
+}
+list.appendChild(sectionHeader('Old Testament','ot-count'));
+const frag = document.createDocumentFragment();
+NAMES.forEach((name, b) => {
+  if (b === NT_START) {
+    list.appendChild(frag);
+    list.appendChild(sectionHeader('New Testament','nt-count'));
+  }
+  const el = document.createElement('div');
+  el.className = 'book';
+  el.id = 'bk'+b;
+  el.innerHTML = `
+    <button class="bk-head" aria-expanded="false">
+      <span class="bk-name">${name}</span>
+      <span class="bk-count"></span>
+      <svg class="bk-ring" viewBox="0 0 22 22" aria-hidden="true">
+        <circle class="track" cx="11" cy="11" r="9"/>
+        <circle class="fill" cx="11" cy="11" r="9"
+          stroke-dasharray="${RING_C.toFixed(2)}" stroke-dashoffset="${RING_C.toFixed(2)}"/>
+      </svg>
+      <svg class="bk-done-check" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <circle cx="11" cy="11" r="10" fill="var(--laurel)"/>
+        <path d="M6.5 11.5l3 3 6-7" stroke="var(--laurel-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>`;
+  el.querySelector('.bk-head').addEventListener('click', () => toggleBook(b));
+  frag.appendChild(el);
+});
+list.appendChild(frag);
+
+function toggleBook(b){
+  const el = document.getElementById('bk'+b);
+  if (el.classList.contains('open')){
+    el.classList.remove('open');
+    el.querySelector('.bk-head').setAttribute('aria-expanded','false');
+    el.querySelector('.grid')?.remove();
+    return;
+  }
+  el.classList.add('open');
+  el.querySelector('.bk-head').setAttribute('aria-expanded','true');
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  for (let c = 1; c <= COUNTS[b]; c++){
+    const id = cid(b,c);
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (done.has(id) ? ' on' : '');
+    chip.textContent = c;
+    chip.setAttribute('aria-label', NAMES[b] + ' chapter ' + c);
+    chip.setAttribute('aria-pressed', done.has(id));
+    chip.addEventListener('click', () => {
+      done.has(id) ? done.delete(id) : done.add(id);
+      chip.classList.toggle('on', done.has(id));
+      chip.setAttribute('aria-pressed', done.has(id));
+      save(); refreshBook(b); refreshTop();
+    });
+    grid.appendChild(chip);
+  }
+  const foot = document.createElement('div');
+  foot.className = 'grid-foot';
+  const all = document.createElement('button');
+  all.className = 'mark-all';
+  foot.appendChild(all);
+  grid.appendChild(foot);
+  el.appendChild(grid);
+  updateMarkAll(b);
+  all.addEventListener('click', () => {
+    const complete = bookDone(b) === COUNTS[b];
+    for (let c = 1; c <= COUNTS[b]; c++) complete ? done.delete(cid(b,c)) : done.add(cid(b,c));
+    save();
+    grid.querySelectorAll('.chip').forEach(ch => {
+      ch.classList.toggle('on', !complete);
+      ch.setAttribute('aria-pressed', !complete);
+    });
+    refreshBook(b); refreshTop();
+  });
+}
+function updateMarkAll(b){
+  const el = document.getElementById('bk'+b).querySelector('.mark-all');
+  if (el) el.textContent = bookDone(b) === COUNTS[b] ? 'Unmark whole book' : 'Mark whole book read';
+}
+function refreshBook(b){
+  const el = document.getElementById('bk'+b);
+  const n = bookDone(b), total = COUNTS[b];
+  el.classList.toggle('complete', n === total);
+  const count = el.querySelector('.bk-count');
+  if (n === total) count.textContent = total + ' of ' + total;
+  else if (n > 0) count.innerHTML = '<span class="started">' + n + '</span> of ' + total;
+  else count.textContent = total + (total === 1 ? ' chapter' : ' chapters');
+  el.querySelector('.bk-ring .fill').style.strokeDashoffset = (RING_C * (1 - n/total)).toFixed(2);
+  updateMarkAll(b);
+}
+
+/* ---------- header + testament counts ---------- */
+const fmt = n => n.toLocaleString('en-US');
+function refreshTop(){
+  const n = done.size;
+  document.getElementById('hcount').innerHTML =
+    '<b>' + fmt(n) + '</b> / ' + fmt(TOTAL) + ' · ' + Math.floor(n/TOTAL*100) + '%';
+  document.getElementById('hbar').style.width = (n/TOTAL*100) + '%';
+  let ot = 0, nt = 0;
+  for (const id of done) (+id.split(':')[0] < NT_START) ? ot++ : nt++;
+  const otTotal = COUNTS.slice(0,NT_START).reduce((a,b)=>a+b,0);
+  document.getElementById('ot-count').textContent = fmt(ot) + ' / ' + fmt(otTotal);
+  document.getElementById('nt-count').textContent = fmt(nt) + ' / ' + fmt(TOTAL - otTotal);
+}
+
+/* ---------- search ---------- */
+const norm = s => s.toLowerCase().replace(/\s+/g,'');
+const NORMED = NAMES.map(norm);
+document.getElementById('search').addEventListener('input', e => {
+  const q = norm(e.target.value);
+  let shown = 0;
+  const sectShown = [false, false];
+  NAMES.forEach((_, b) => {
+    const hit = !q || NORMED[b].includes(q);
+    document.getElementById('bk'+b).style.display = hit ? '' : 'none';
+    if (hit){ shown++; sectShown[b < NT_START ? 0 : 1] = true; }
+  });
+  document.querySelectorAll('.sect').forEach((el, i) => {
+    el.style.display = sectShown[i] ? '' : 'none';
+  });
+  document.getElementById('nomatch').style.display = shown ? 'none' : 'block';
+  /* exactly one hit — open it so the chapters are a single tap away */
+  if (q && shown === 1){
+    const b = NORMED.findIndex((n, i) =>
+      document.getElementById('bk'+i).style.display !== 'none');
+    const el = document.getElementById('bk'+b);
+    if (!el.classList.contains('open')) toggleBook(b);
+  }
+});
+
+function rerenderAll(){
+  document.querySelectorAll('.book.open').forEach(el => {
+    el.classList.remove('open');
+    el.querySelector('.bk-head').setAttribute('aria-expanded','false');
+    el.querySelector('.grid')?.remove();
+  });
+  NAMES.forEach((_,b) => refreshBook(b));
+  refreshTop();
+}
+
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ---------- reset ---------- */
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('Erase all reading progress on this device?')) return;
+  done.clear(); save();
+  rerenderAll();
+  window.scrollTo({top:0});
+});
+
+/* ---------- progress code ----------
+   One bit per chapter in canonical order (1,189 bits), base64url, "BR1-" prefix. */
+const CODE_PREFIX = 'BR1-';
+const OFFSETS = [];
+COUNTS.reduce((o, n) => (OFFSETS.push(o), o + n), 0);
+const BYTE_LEN = Math.ceil(TOTAL / 8);
+
+function encodeProgress(){
+  const bytes = new Uint8Array(BYTE_LEN);
+  for (const id of done){
+    const [b, c] = id.split(':').map(Number);
+    const i = OFFSETS[b] + c - 1;
+    bytes[i >> 3] |= 1 << (i & 7);
+  }
+  let bin = '';
+  bytes.forEach(x => bin += String.fromCharCode(x));
+  return CODE_PREFIX + btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeProgress(text){
+  const m = text.replace(/\s+/g,'').match(/BR1-([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  let b64 = m[1].replace(/-/g,'+').replace(/_/g,'/');
+  while (b64.length % 4) b64 += '=';
+  let bin;
+  try { bin = atob(b64); } catch(e) { return null; }
+  if (bin.length !== BYTE_LEN) return null;
+  const out = new Set();
+  COUNTS.forEach((n, b) => {
+    for (let c = 1; c <= n; c++){
+      const i = OFFSETS[b] + c - 1;
+      if (bin.charCodeAt(i >> 3) & (1 << (i & 7))) out.add(cid(b, c));
+    }
+  });
+  return out;
+}
+
+const exportDlg = document.getElementById('exportDlg');
+const exportCode = document.getElementById('exportCode');
+const exportMsg = document.getElementById('exportMsg');
+const shareBtn = document.getElementById('shareBtn');
+const chaptersWord = n => fmt(n) + (n === 1 ? ' chapter' : ' chapters');
+
+async function copyCode(){
+  try {
+    await navigator.clipboard.writeText(exportCode.value);
+    exportMsg.textContent = 'Copied. Paste it into Notes or a message to yourself.';
+  } catch(e) {
+    exportCode.focus(); exportCode.select();
+    exportMsg.textContent = 'Press and hold the code, then tap Copy.';
+  }
+}
+document.getElementById('exportBtn').addEventListener('click', () => {
+  exportCode.value = encodeProgress();
+  document.getElementById('exportText').textContent =
+    'This code holds all ' + chaptersWord(done.size) + ' you’ve checked off. Keep it somewhere safe.';
+  exportMsg.textContent = '';
+  shareBtn.hidden = !navigator.share;
+  exportDlg.showModal();
+  copyCode();
+});
+document.getElementById('copyBtn').addEventListener('click', copyCode);
+shareBtn.addEventListener('click', () => {
+  navigator.share({ title: 'Bible Reading progress', text: exportCode.value }).catch(() => {});
+});
+document.getElementById('exportClose').addEventListener('click', () => exportDlg.close());
+
+const importDlg = document.getElementById('importDlg');
+const importCode = document.getElementById('importCode');
+const importMsg = document.getElementById('importMsg');
+document.getElementById('importBtn').addEventListener('click', () => {
+  importCode.value = '';
+  importMsg.textContent = '';
+  importMsg.classList.remove('err');
+  importDlg.showModal();
+});
+document.getElementById('importClose').addEventListener('click', () => importDlg.close());
+document.getElementById('importGo').addEventListener('click', () => {
+  const incoming = decodeProgress(importCode.value);
+  if (!incoming){
+    importMsg.classList.add('err');
+    importMsg.textContent = 'That code isn’t complete. Copy the whole thing, starting with BR1-.';
+    return;
+  }
+  if (done.size > 0 &&
+      !confirm('Replace the ' + chaptersWord(done.size) + ' on this phone with the ' +
+               chaptersWord(incoming.size) + ' from the code?')) return;
+  done = incoming; save();
+  rerenderAll();
+  importDlg.close();
+  toast('Imported ' + chaptersWord(incoming.size));
+});
+
+/* ---------- init ---------- */
+NAMES.forEach((_,b) => refreshBook(b));
+refreshTop();
+</script>
+</body>
+</html>
